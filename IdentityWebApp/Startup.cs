@@ -1,11 +1,13 @@
 ﻿using IdentityWebApp.CustomValidation;
 using IdentityWebApp.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace IdentityWebApp
 {
@@ -26,20 +28,21 @@ namespace IdentityWebApp
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
             });
 
-            CookieBuilder cookieBuilder = new CookieBuilder();
-            cookieBuilder.Name = "MyBlog";
-            cookieBuilder.HttpOnly = false;
-            cookieBuilder.Expiration = System.TimeSpan.FromDays(30);
-            cookieBuilder.SameSite = SameSiteMode.Lax;
-            cookieBuilder.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-            services.ConfigureApplicationCookie(options =>
+            services.AddAuthentication(options =>
             {
-                options.LoginPath = new PathString("/Home/Login");
-                //options.LogoutPath = new PathString("/Home/Loguth");
-                options.Cookie = cookieBuilder;
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie(options =>
+            {
+                options.Cookie.Name = "MyBlog";
+                options.Cookie.HttpOnly = false;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.Cookie.MaxAge = options.ExpireTimeSpan; // optional
                 options.SlidingExpiration = true;
+                options.LoginPath = new PathString("/Home/Login");
             });
+
             services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -50,9 +53,9 @@ namespace IdentityWebApp
                 options.Password.RequireLowercase = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireDigit = false;
-            }).AddPasswordValidator<CustomIdentityErrorDescriber>()
-            .AddPasswordValidator<CustomPasswordValidator>()
+            }).AddPasswordValidator<CustomPasswordValidator>()
                 .AddUserValidator<CustomUserValidator>()
+                .AddErrorDescriber<CustomIdentityErrorDescriber>()
                 .AddEntityFrameworkStores<AppIdentityDbContext>();
 
             services.AddMvc();

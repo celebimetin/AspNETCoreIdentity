@@ -56,10 +56,5 @@ namespace IdentityWebApp.Controllers
             return View(userViewModel);
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> Login()
-        //{
-        //    return View();
-        //}
     }
 }
