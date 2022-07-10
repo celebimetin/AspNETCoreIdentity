@@ -9,10 +9,12 @@ namespace IdentityWebApp.Controllers
     public class HomeController : Controller
     {
         private UserManager<AppUser> _userManager { get; }
+        private SignInManager<AppUser> _signInManager { get; }
 
-        public HomeController(UserManager<AppUser> userManager)
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public IActionResult Index()
@@ -21,11 +23,6 @@ namespace IdentityWebApp.Controllers
         }
 
         public IActionResult SignUp()
-        {
-            return View();
-        }
-
-        public IActionResult Login()
         {
             return View();
         }
@@ -54,6 +51,35 @@ namespace IdentityWebApp.Controllers
                 }
             }
             return View(userViewModel);
+        }
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel loginViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(loginViewModel.Email);
+                if (user != null)
+                {
+                    await _signInManager.SignOutAsync();
+                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, false, false);
+
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Index", "Member");
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Geçersiz email adresi veya şifresi");
+                }
+            }
+            return View(loginViewModel);
         }
 
     }

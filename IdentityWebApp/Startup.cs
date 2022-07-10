@@ -33,12 +33,11 @@ namespace IdentityWebApp
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options =>
             {
-                options.Cookie.Name = "MyBlog";
+                options.Cookie.Name = "MyCookie";
                 options.Cookie.HttpOnly = false;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-                options.Cookie.MaxAge = options.ExpireTimeSpan; // optional
                 options.SlidingExpiration = true;
                 options.LoginPath = new PathString("/Home/Login");
             });
