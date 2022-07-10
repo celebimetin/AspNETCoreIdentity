@@ -34,7 +34,8 @@ namespace IdentityWebApp
                 options.Password.RequireLowercase = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireDigit = false;
-            }).AddPasswordValidator<CustomPasswordValidator>()
+            }).AddPasswordValidator<CustomIdentityErrorDescriber>()
+            .AddPasswordValidator<CustomPasswordValidator>()
                 .AddUserValidator<CustomUserValidator>()
                 .AddEntityFrameworkStores<AppIdentityDbContext>();
 
