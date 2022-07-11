@@ -2,6 +2,7 @@
 using IdentityWebApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace IdentityWebApp.Controllers
@@ -67,21 +68,47 @@ namespace IdentityWebApp.Controllers
                 var user = await _userManager.FindByEmailAsync(loginViewModel.Email);
                 if (user != null)
                 {
+                    if (await _userManager.IsLockedOutAsync(user))
+                    {
+                        ModelState.AddModelError("", "Hesabınızı bir süreliğine kilitlenmiştir. Lütfen daha sonra tekrar deneyiniz.");
+                        return View(loginViewModel);
+                    }
+
                     await _signInManager.SignOutAsync();
                     Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, loginViewModel.RememberMe, false);
 
                     if (result.Succeeded)
                     {
+                        await _userManager.ResetAccessFailedCountAsync(user);
+
                         if (TempData["ReturnUrl"] != null)
                         {
                             return Redirect(TempData["ReturnUrl"].ToString());
                         }
                         return RedirectToAction("Index", "Member");
                     }
+                    else
+                    {
+                        await _userManager.AccessFailedAsync(user);
+
+                        int fail = await _userManager.GetAccessFailedCountAsync(user);
+
+                        ModelState.AddModelError("", $"{fail} kez başarısız giriş yapıldı.");
+                        if (fail == 3)
+                        {
+                            await _userManager.SetLockoutEndDateAsync(user, new DateTimeOffset(DateTime.Now.AddMinutes(15)));
+
+                            ModelState.AddModelError("", $"Hesabınız 3 başarısız girişten dolayı 15 dakika süreyle kitlenmiştir. Lüften daha sonra tekrar deneyiniz.");
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "Email adresiniz veya şifresiniz yanlış");
+                        }
+                    }
                 }
                 else
                 {
-                    ModelState.AddModelError("", "Geçersiz email adresi veya şifresi");
+                    ModelState.AddModelError("", "Geçersiz email adresi veya şifre");
                 }
             }
             return View(loginViewModel);
