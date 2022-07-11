@@ -53,8 +53,9 @@ namespace IdentityWebApp.Controllers
             return View(userViewModel);
         }
 
-        public IActionResult Login()
+        public IActionResult Login(string ReturnUrl)
         {
+            TempData["ReturnUrl"] = ReturnUrl;
             return View();
         }
 
@@ -67,10 +68,14 @@ namespace IdentityWebApp.Controllers
                 if (user != null)
                 {
                     await _signInManager.SignOutAsync();
-                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, false, false);
+                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, loginViewModel.RememberMe, false);
 
                     if (result.Succeeded)
                     {
+                        if (TempData["ReturnUrl"] != null)
+                        {
+                            return Redirect(TempData["ReturnUrl"].ToString());
+                        }
                         return RedirectToAction("Index", "Member");
                     }
                 }

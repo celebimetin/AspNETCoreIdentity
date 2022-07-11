@@ -27,21 +27,6 @@ namespace IdentityWebApp
             {
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
             });
-
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie(options =>
-            {
-                options.Cookie.Name = "MyCookie";
-                options.Cookie.HttpOnly = false;
-                options.Cookie.SameSite = SameSiteMode.Lax;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-                options.SlidingExpiration = true;
-                options.LoginPath = new PathString("/Home/Login");
-            });
-
             services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -57,6 +42,22 @@ namespace IdentityWebApp
                 .AddErrorDescriber<CustomIdentityErrorDescriber>()
                 .AddEntityFrameworkStores<AppIdentityDbContext>();
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie(options =>
+            {
+                options.Cookie.HttpOnly = false;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            });
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = new PathString("/Home/Login");
+                options.Cookie.Name = "MyCookie";
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = TimeSpan.FromDays(30);
+            });
             services.AddMvc();
         }
 
@@ -66,13 +67,14 @@ namespace IdentityWebApp
             app.UseDeveloperExceptionPage();
             app.UseStatusCodePages();
             app.UseStaticFiles();
-            app.UseAuthentication();
-
             app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapDefaultControllerRoute();
             });
+            
         }
     }
 }
