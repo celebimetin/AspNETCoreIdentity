@@ -114,5 +114,70 @@ namespace IdentityWebApp.Controllers
             return View(loginViewModel);
         }
 
+        public IActionResult ResetPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ResetPassword(PasswordResetViewModel passwordResetViewModel)
+        {
+            var user = _userManager.FindByEmailAsync(passwordResetViewModel.Email).Result;
+            if (user != null)
+            {
+                string passwordResetToken = _userManager.GeneratePasswordResetTokenAsync(user).Result;
+
+                string passwordResetLink = Url.Action("ResetPasswordConfirm", "Home", new
+                {
+                    userId = user.Id,
+                    token = passwordResetToken,
+                }, HttpContext.Request.Scheme);
+
+                Helpers.PasswordResetHelper.PasswordResetSendEmail(passwordResetLink);
+
+                ViewBag.status = "success";
+            }
+            else
+            {
+                ModelState.AddModelError("", "Sistemde kayıtlı mail adresi bulunamadı.");
+            }
+            return View(passwordResetViewModel);
+        }
+
+        public IActionResult ResetPasswordConfirm(string userId, string token)
+        {
+            TempData["userId"] = userId;
+            TempData["token"] = token;
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPasswordConfirm([Bind("NewPassword")]PasswordResetViewModel passwordResetViewModel)
+        {
+            string token = TempData["token"].ToString();
+            string userId = TempData["userId"].ToString();
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user != null)
+            {
+                var result = await _userManager.ResetPasswordAsync(user, token, passwordResetViewModel.NewPassword);
+
+                if (result.Succeeded)
+                {
+                    await _userManager.UpdateSecurityStampAsync(user);
+                    ViewBag.status = "success";
+                }
+                else
+                {
+                    foreach (var item in result.Errors)
+                    {
+                        ModelState.AddModelError("", item.Description);
+                    }
+                }
+            }
+            return View(passwordResetViewModel);
+        }
     }
 }
