@@ -55,6 +55,7 @@ namespace IdentityWebApp
             services.ConfigureApplicationCookie(options =>
             {
                 options.LoginPath = new PathString("/Home/Login");
+                options.LogoutPath = new PathString("/Member/Logout");
                 options.Cookie.Name = "MyCookie";
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);

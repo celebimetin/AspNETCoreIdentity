@@ -1,18 +1,128 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using IdentityWebApp.Enums;
+using IdentityWebApp.Models;
+using IdentityWebApp.ViewModels;
+using Mapster;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace IdentityWebApp.Controllers
 {
     [Authorize]
-    public class MemberController : Controller
+    public class MemberController : BaseController
     {
+        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager) { }
+
         public IActionResult Index()
         {
+            var user = _userManager.FindByNameAsync(User.Identity.Name).Result;
+            UserViewModel userViewModel = user.Adapt<UserViewModel>();
+
+            return View(userViewModel);
+        }
+
+        public IActionResult UserEdit()
+        {
+            var user = CurrentUser;
+            var userViewModel = user.Adapt<UserViewModel>();
+            ViewBag.Gender = new SelectList(Enum.GetNames(typeof(Gender)));
+            return View(userViewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UserEdit(UserViewModel userViewModel, IFormFile userPicture)
+        {
+            ModelState.Remove("Password");
+
+            if (ModelState.IsValid)
+            {
+                var user = CurrentUser;
+
+                if (userPicture != null && userPicture.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(userPicture.FileName);
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Picture", fileName);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await userPicture.CopyToAsync(stream);
+                        user.Picture = "/Picture/" + fileName;
+                    }
+                }
+                user.UserName = userViewModel.UserName;
+                user.Email = userViewModel.Email;
+                user.PhoneNumber = userViewModel.PhoneNumber;
+                user.City = userViewModel.City;
+                user.BirthDay = userViewModel.BirthDay;
+                user.Gender = (int)userViewModel.Gender;
+
+                var result = await _userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    await _userManager.UpdateSecurityStampAsync(user);
+
+                    await _signInManager.SignOutAsync();
+                    await _signInManager.SignInAsync(user, true);
+
+                    ViewBag.success = "true";
+                }
+                else
+                {
+                    AddModelError(result);
+                }
+            }
+            return View(userViewModel);
+        }
+
+        public IActionResult PasswordChange()
+        {
             return View();
+        }
+
+        [HttpPost]
+        public IActionResult PasswordChange(PasswordChangeViewModel passwordChange)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = CurrentUser;
+                if (user != null)
+                {
+                    bool exist = _userManager.CheckPasswordAsync(user, passwordChange.PasswordOld).Result;
+                    if (exist)
+                    {
+                        var result = _userManager.ChangePasswordAsync(user, passwordChange.PasswordOld, passwordChange.PasswordNew).Result;
+                        if (result.Succeeded)
+                        {
+                            _userManager.UpdateSecurityStampAsync(user);
+
+                            _signInManager.SignOutAsync();
+                            _signInManager.PasswordSignInAsync(user, passwordChange.PasswordNew, true, false);
+
+                            ViewBag.success = "true";
+                        }
+                        else
+                        {
+                            AddModelError(result);
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Eski şifreniz yanlıştır.");
+                    }
+                }
+            }
+            return View(passwordChange);
+        }
+
+        public void Logout()
+        {
+            _signInManager.SignOutAsync();
         }
     }
 }

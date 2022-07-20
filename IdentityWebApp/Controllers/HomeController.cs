@@ -7,19 +7,16 @@ using System.Threading.Tasks;
 
 namespace IdentityWebApp.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
-        private UserManager<AppUser> _userManager { get; }
-        private SignInManager<AppUser> _signInManager { get; }
-
-        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager) { }
 
         public IActionResult Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Member");
+            }
             return View();
         }
 
@@ -45,10 +42,7 @@ namespace IdentityWebApp.Controllers
                 }
                 else
                 {
-                    foreach (IdentityError item in result.Errors)
-                    {
-                        ModelState.AddModelError("", item.Description);
-                    }
+                    AddModelError(result);
                 }
             }
             return View(userViewModel);
@@ -153,7 +147,7 @@ namespace IdentityWebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResetPasswordConfirm([Bind("NewPassword")]PasswordResetViewModel passwordResetViewModel)
+        public async Task<IActionResult> ResetPasswordConfirm([Bind("NewPassword")] PasswordResetViewModel passwordResetViewModel)
         {
             string token = TempData["token"].ToString();
             string userId = TempData["userId"].ToString();
@@ -171,10 +165,7 @@ namespace IdentityWebApp.Controllers
                 }
                 else
                 {
-                    foreach (var item in result.Errors)
-                    {
-                        ModelState.AddModelError("", item.Description);
-                    }
+                    AddModelError(result);
                 }
             }
             return View(passwordResetViewModel);
