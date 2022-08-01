@@ -56,9 +56,11 @@ namespace IdentityWebApp
             {
                 options.LoginPath = new PathString("/Home/Login");
                 options.LogoutPath = new PathString("/Member/Logout");
+                options.LogoutPath = new PathString("/Admin/Logout");
                 options.Cookie.Name = "MyCookie";
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);
+                options.AccessDeniedPath = new PathString("/Member/AccessDenied");
             });
             services.AddMvc();
         }

@@ -13,10 +13,10 @@ using System.Threading.Tasks;
 
 namespace IdentityWebApp.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class MemberController : BaseController
     {
-        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager) { }
+        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager, null) { }
 
         public IActionResult Index()
         {
@@ -123,6 +123,23 @@ namespace IdentityWebApp.Controllers
         public void Logout()
         {
             _signInManager.SignOutAsync();
+        }
+
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Editor,Admin")]
+        public IActionResult Editor()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Manager,Admin")]
+        public IActionResult Manager()
+        {
+            return View();
         }
     }
 }
