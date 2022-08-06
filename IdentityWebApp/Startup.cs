@@ -1,6 +1,9 @@
 ﻿using IdentityWebApp.CustomValidation;
 using IdentityWebApp.Models;
+using IdentityWebApp.Requirements;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -24,10 +27,26 @@ namespace IdentityWebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();
+
             services.AddDbContext<AppIdentityDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
             });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AnkaraPolicy", policy =>
+                {
+                    policy.RequireClaim("city", "samsun");
+                });
+
+                options.AddPolicy("ExchangePolicy", policy =>
+                {
+                    policy.AddRequirements(new ExpireDateExchangeRequirement());
+                });
+            });
+
             services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -52,16 +71,19 @@ namespace IdentityWebApp
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             });
+
             services.ConfigureApplicationCookie(options =>
             {
                 options.LoginPath = new PathString("/Home/Login");
                 options.LogoutPath = new PathString("/Member/Logout");
-                options.LogoutPath = new PathString("/Admin/Logout");
                 options.Cookie.Name = "MyCookie";
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);
                 options.AccessDeniedPath = new PathString("/Member/AccessDenied");
             });
+
+            services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
+
             services.AddMvc();
         }
 

@@ -79,7 +79,7 @@ namespace IdentityWebApp.Controllers
                         {
                             return Redirect(TempData["ReturnUrl"].ToString());
                         }
-                        return RedirectToAction("Index", "Member");
+                        return RedirectToAction("Index", "Home");
                     }
                     else
                     {

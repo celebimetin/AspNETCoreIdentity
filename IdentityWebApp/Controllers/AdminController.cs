@@ -143,6 +143,12 @@ namespace IdentityWebApp.Controllers
         public void Logout()
         {
             _signInManager.SignOutAsync();
+            RedirectToAction("Login", "Home");
+        }
+
+        public IActionResult Claims()
+        {
+            return View(User.Claims.ToList());
         }
     }
 }

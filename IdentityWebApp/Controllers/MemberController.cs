@@ -9,11 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.IO;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace IdentityWebApp.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public class MemberController : BaseController
     {
         public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager, null) { }
@@ -138,6 +139,32 @@ namespace IdentityWebApp.Controllers
 
         [Authorize(Roles = "Manager,Admin")]
         public IActionResult Manager()
+        {
+            return View();
+        }
+
+        [Authorize(Policy = "AnkaraPolicy")]
+        public IActionResult ClaimAuthorize()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> ExchangeRedirect()
+        {
+            var result = User.HasClaim(x => x.Type == "ExpireDateExchange");
+            if (!result)
+            {
+                var ExpireDateExchange = new Claim("ExpireDateExchange", DateTime.Now.AddDays(30).Date.ToShortDateString(), ClaimValueTypes.String, "Internal");
+
+                await _userManager.AddClaimAsync(CurrentUser, ExpireDateExchange);
+                await _signInManager.SignOutAsync();
+                await _signInManager.SignInAsync(CurrentUser, true);
+            }
+            return RedirectToAction("Exchange");
+        }
+
+        [Authorize(Policy = "ExchangePolicy")]
+        public IActionResult Exchange()
         {
             return View();
         }
