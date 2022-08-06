@@ -5,13 +5,13 @@ namespace IdentityWebApp.Helpers
 {
     public static class PasswordResetHelper
     {
-        public static void PasswordResetSendEmail(string link)
+        public static void PasswordResetSendEmail(string link, string email)
         {
             MailMessage mail = new MailMessage();
             SmtpClient smtpClient = new SmtpClient("smtp.mandrillapp.com");
 
             mail.From = new MailAddress("metincelebi5534@hotmail.com");
-            mail.To.Add("mcelebi@protel.com.tr");
+            mail.To.Add(email);
 
             mail.Subject = $"www.blabla.com::Şifre sıfırlama";
             mail.Body = "<h2>Şifrenizi yenilemek için lütfen aşağıdaki linke tıklayınız.</h2><hr/>";

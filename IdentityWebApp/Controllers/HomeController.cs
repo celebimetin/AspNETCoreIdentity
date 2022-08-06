@@ -127,7 +127,7 @@ namespace IdentityWebApp.Controllers
                     token = passwordResetToken,
                 }, HttpContext.Request.Scheme);
 
-                Helpers.PasswordResetHelper.PasswordResetSendEmail(passwordResetLink);
+                Helpers.PasswordResetHelper.PasswordResetSendEmail(passwordResetLink, user.Email);
 
                 ViewBag.status = "success";
             }
