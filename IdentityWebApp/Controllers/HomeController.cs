@@ -38,6 +38,14 @@ namespace IdentityWebApp.Controllers
 
                 if (result.Succeeded)
                 {
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    string link = Url.Action("ConfirmEmail", "Home", new
+                    {
+                        userId = user.Id,
+                        token = confirmationToken
+                    }, protocol: HttpContext.Request.Scheme);
+                    Helpers.EmailConfirmation.EmailConfirmationSend(link, user.Email);
+
                     return RedirectToAction("Login");
                 }
                 else
@@ -65,6 +73,12 @@ namespace IdentityWebApp.Controllers
                     if (await _userManager.IsLockedOutAsync(user))
                     {
                         ModelState.AddModelError("", "Hesabınızı bir süreliğine kilitlenmiştir. Lütfen daha sonra tekrar deneyiniz.");
+                        return View(loginViewModel);
+                    }
+
+                    if (!_userManager.IsEmailConfirmedAsync(user).Result)
+                    {
+                        ModelState.AddModelError("", "Email adresiniz onaylanmamıştır. Lütfen e-postanıza gelen doğrulama mailinden e-postanızı doğrulayın.");
                         return View(loginViewModel);
                     }
 
@@ -169,6 +183,21 @@ namespace IdentityWebApp.Controllers
                 }
             }
             return View(passwordResetViewModel);
+        }
+
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                ViewBag.status = "Email adresiniz onaylanmıştır";
+            }
+            else
+            {
+                ViewBag.status = "Bir hata meydana geldi";
+            }
+            return View();
         }
     }
 }
