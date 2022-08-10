@@ -47,10 +47,24 @@ namespace IdentityWebApp
                 });
             });
 
+            services.AddAuthentication().AddFacebook(options =>
+            {
+                options.AppId = Configuration["Authentication:Facebook:AppId"];
+                options.AppSecret = Configuration["Authentication:Facebook:AppSecret"];
+            }).AddGoogle(options =>
+            {
+                options.ClientId = Configuration["Authentication:Google:ClientID"];
+                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+            }).AddMicrosoftAccount(options =>
+            {
+                options.ClientId = Configuration["Authentication:Microsoft:ClientID"];
+                options.ClientSecret = Configuration["Authentication:Microsoft:ClientSecret"];
+            });
+
             services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters = "abcçdefghıijklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._";
+                options.User.AllowedUserNameCharacters = "abcçdefgğhıijklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._";
 
                 options.Password.RequiredLength = 4;
                 options.Password.RequireNonAlphanumeric = false;
