@@ -293,5 +293,10 @@ namespace IdentityWebApp.Controllers
         {
             return View();
         }
+
+        public IActionResult Policy()
+        {
+            return View();
+        }
     }
 }

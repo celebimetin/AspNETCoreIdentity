@@ -131,13 +131,13 @@ namespace IdentityWebApp.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Editor,Admin")]
+        [Authorize(Roles = "editor,admin")]
         public IActionResult Editor()
         {
             return View();
         }
 
-        [Authorize(Roles = "Manager,Admin")]
+        [Authorize(Roles = "manager,admin")]
         public IActionResult Manager()
         {
             return View();

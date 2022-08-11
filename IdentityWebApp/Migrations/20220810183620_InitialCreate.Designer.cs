@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityWebApp.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    [Migration("20220720083042_AddPicture_BirthDay_Gender")]
-    partial class AddPicture_BirthDay_Gender
+    [Migration("20220810183620_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
