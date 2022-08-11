@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -43,7 +44,15 @@ namespace IdentityWebApp.Controllers
             if (ModelState.IsValid)
             {
                 var user = CurrentUser;
-
+                var phone = _userManager.GetPhoneNumberAsync(user).Result;
+                if (phone != userViewModel.PhoneNumber)
+                {
+                    if (_userManager.Users.Any(x => x.PhoneNumber == userViewModel.PhoneNumber))
+                    {
+                        ModelState.AddModelError("", "Bu telefon numarası kayıtlıdır.");
+                        return View(userViewModel);
+                    }
+                }
                 if (userPicture != null && userPicture.Length > 0)
                 {
                     var fileName = Guid.NewGuid().ToString() + Path.GetExtension(userPicture.FileName);

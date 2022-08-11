@@ -32,6 +32,11 @@ namespace IdentityWebApp.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (_userManager.Users.Any(x => x.PhoneNumber == userViewModel.PhoneNumber))
+                {
+                    ModelState.AddModelError("", "Bu telefon numarası kayıtlıdır.");
+                    return View(userViewModel);
+                }
                 AppUser user = new AppUser();
                 user.UserName = userViewModel.UserName;
                 user.Email = userViewModel.Email;
