@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using Microsoft.Extensions.Hosting;
+using IdentityWebApp.Services;
 
 namespace IdentityWebApp
 {
@@ -27,12 +29,14 @@ namespace IdentityWebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<TwoFactorService>();
+
             services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();
 
             services.AddDbContext<AppIdentityDbContext>(options =>
             {
                 //options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultAzureConnectionString"));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
             });
 
             services.AddAuthorization(options =>
@@ -105,7 +109,12 @@ namespace IdentityWebApp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseDeveloperExceptionPage();
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseBrowserLink();
+            }
+
             app.UseStatusCodePages();
             app.UseStaticFiles();
             app.UseRouting();
@@ -115,7 +124,6 @@ namespace IdentityWebApp
             {
                 endpoints.MapDefaultControllerRoute();
             });
-            
         }
     }
 }

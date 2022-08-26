@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityWebApp.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    [Migration("20220810183620_InitialCreate")]
+    [Migration("20220824152504_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -104,6 +104,9 @@ namespace IdentityWebApp.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<short?>("TwoFactor")
+                        .HasColumnType("smallint");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");

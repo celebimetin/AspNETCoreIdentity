@@ -1,4 +1,5 @@
-﻿using IdentityWebApp.Models;
+﻿using IdentityWebApp.Enums;
+using IdentityWebApp.Models;
 using IdentityWebApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace IdentityWebApp.Controllers
 {
     public class HomeController : BaseController
     {
-        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager, null) { }
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager, null, null) { }
 
         public IActionResult Index()
         {
@@ -41,6 +42,7 @@ namespace IdentityWebApp.Controllers
                 user.UserName = userViewModel.UserName;
                 user.Email = userViewModel.Email;
                 user.PhoneNumber = userViewModel.PhoneNumber;
+                user.TwoFactor = 0;
                 IdentityResult result = await _userManager.CreateAsync(user, userViewModel.Password);
 
                 if (result.Succeeded)
@@ -63,7 +65,7 @@ namespace IdentityWebApp.Controllers
             return View(userViewModel);
         }
 
-        public IActionResult Login(string ReturnUrl)
+        public IActionResult Login(string ReturnUrl = "/")
         {
             TempData["ReturnUrl"] = ReturnUrl;
             return View();
@@ -89,18 +91,22 @@ namespace IdentityWebApp.Controllers
                         return View(loginViewModel);
                     }
 
-                    await _signInManager.SignOutAsync();
-                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, loginViewModel.RememberMe, false);
-
-                    if (result.Succeeded)
+                    bool userCheck = await _userManager.CheckPasswordAsync(user, loginViewModel.Password);
+                    if (userCheck)
                     {
                         await _userManager.ResetAccessFailedCountAsync(user);
+                        await _signInManager.SignOutAsync();
 
-                        if (TempData["ReturnUrl"] != null)
+                        var result = await _signInManager.PasswordSignInAsync(user, loginViewModel.Password, loginViewModel.RememberMe, false);
+
+                        if (result.RequiresTwoFactor)
+                        {
+                            return RedirectToAction("TwoFactorLogin");
+                        }
+                        else
                         {
                             return Redirect(TempData["ReturnUrl"].ToString());
                         }
-                        return RedirectToAction("Index", "Home");
                     }
                     else
                     {
@@ -127,6 +133,58 @@ namespace IdentityWebApp.Controllers
                 }
             }
             return View(loginViewModel);
+        }
+
+        public async Task<IActionResult> TwoFactorLogin(string ReturnUrl = "/")
+        {
+            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+            TempData["ReturnUrl"] = ReturnUrl;
+
+            switch ((TwoFactor)user.TwoFactor)
+            {
+                case TwoFactor.MicrosoftGoogle:
+                    break;
+            }
+            return View(new TwoFactorLoginViewModel() { TwoFactorType = (TwoFactor)user.TwoFactor, IsRecoverCode = false, IsRememberMe = false, VerificationCode = string.Empty });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TwoFactorLogin(TwoFactorLoginViewModel twoFactorLoginViewModel)
+        {
+            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+
+            ModelState.Clear();
+            bool isSuccessAuth = false;
+
+            if ((TwoFactor)user.TwoFactor == TwoFactor.MicrosoftGoogle)
+            {
+                Microsoft.AspNetCore.Identity.SignInResult result;
+
+                if (twoFactorLoginViewModel.IsRecoverCode)
+                {
+                    result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(twoFactorLoginViewModel.VerificationCode);
+                }
+                else
+                {
+                    result = await _signInManager.TwoFactorAuthenticatorSignInAsync(twoFactorLoginViewModel.VerificationCode, twoFactorLoginViewModel.IsRememberMe, false);
+                }
+                if (result.Succeeded)
+                {
+                    isSuccessAuth = true;
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Doğrulama kodu yanlış");
+                }
+            }
+
+            if (isSuccessAuth)
+            {
+                return Redirect(TempData["ReturnUrl"].ToString());
+            }
+
+            twoFactorLoginViewModel.TwoFactorType = (TwoFactor)user.TwoFactor;
+            return View(twoFactorLoginViewModel);
         }
 
         public IActionResult ResetPassword()
