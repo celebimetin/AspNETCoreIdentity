@@ -39,7 +39,6 @@ namespace IdentityWebApp
 
             services.AddDbContext<AppIdentityDbContext>(options =>
             {
-                //options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
             });
 
@@ -83,7 +82,8 @@ namespace IdentityWebApp
             }).AddPasswordValidator<CustomPasswordValidator>()
                 .AddUserValidator<CustomUserValidator>()
                 .AddErrorDescriber<CustomIdentityErrorDescriber>()
-                .AddEntityFrameworkStores<AppIdentityDbContext>().AddDefaultTokenProviders();
+                .AddEntityFrameworkStores<AppIdentityDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
             {

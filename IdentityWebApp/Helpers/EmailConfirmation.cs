@@ -8,7 +8,7 @@ namespace IdentityWebApp.Helpers
         public static void EmailConfirmationSend(string link, string email)
         {
             MailMessage mail = new MailMessage();
-            SmtpClient smtpClient = new SmtpClient("smtp.sendgrid.com");
+            SmtpClient smtpClient = new SmtpClient("smtp.sendgrid.net");
 
             mail.From = new MailAddress("metincelebi5534@hotmail.com");
             mail.To.Add(email);
@@ -18,7 +18,7 @@ namespace IdentityWebApp.Helpers
             mail.Body += $"<a href='{link}'>Email doğrulama linki</a>";
             mail.IsBodyHtml = true;
             smtpClient.Port = 587;
-            smtpClient.Credentials = new NetworkCredential("", "");
+            smtpClient.Credentials = new NetworkCredential("apikey", "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");
             smtpClient.Send(mail);
         }
     }

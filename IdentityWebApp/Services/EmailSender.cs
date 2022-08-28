@@ -21,7 +21,7 @@ namespace IdentityWebApp.Services
             string code = _twoFactorService.GetCodeVerificaiton().ToString();
             Execute(emailAdress, code).Wait();
 
-            return code = "123123";
+            return code;
         }
 
         private async Task Execute(string email, string code)

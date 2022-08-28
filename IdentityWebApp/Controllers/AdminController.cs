@@ -89,25 +89,6 @@ namespace IdentityWebApp.Controllers
             return RedirectToAction("Roles");
         }
 
-        public async Task<IActionResult> ResetUserPassword(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            PasswordResetByAdminViewModel passwordResetByAdminViewModel = new PasswordResetByAdminViewModel();
-            passwordResetByAdminViewModel.UserId = user.Id;
-            return View(passwordResetByAdminViewModel);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ResetUserPassword(PasswordResetByAdminViewModel passwordResetByAdminViewModel)
-        {
-            var user = await _userManager.FindByIdAsync(passwordResetByAdminViewModel.UserId);
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            await _userManager.ResetPasswordAsync(user, token, passwordResetByAdminViewModel.NewPassword);
-
-            await _userManager.UpdateSecurityStampAsync(user);
-            return RedirectToAction("Users");
-        }
-
         public IActionResult RoleAssign(string id)
         {
             TempData["userId"] = id;
@@ -156,6 +137,25 @@ namespace IdentityWebApp.Controllers
                     await _userManager.RemoveFromRoleAsync(user, item.RoleName);
                 }
             }
+            return RedirectToAction("Users");
+        }
+
+        public async Task<IActionResult> ResetUserPassword(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            PasswordResetByAdminViewModel passwordResetByAdminViewModel = new PasswordResetByAdminViewModel();
+            passwordResetByAdminViewModel.UserId = user.Id;
+            return View(passwordResetByAdminViewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetUserPassword(PasswordResetByAdminViewModel passwordResetByAdminViewModel)
+        {
+            var user = await _userManager.FindByIdAsync(passwordResetByAdminViewModel.UserId);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _userManager.ResetPasswordAsync(user, token, passwordResetByAdminViewModel.NewPassword);
+
+            await _userManager.UpdateSecurityStampAsync(user);
             return RedirectToAction("Users");
         }
 
