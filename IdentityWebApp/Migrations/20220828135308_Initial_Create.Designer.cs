@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityWebApp.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    [Migration("20220824152504_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20220828135308_Initial_Create")]
+    partial class Initial_Create
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
