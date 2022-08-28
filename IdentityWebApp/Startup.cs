@@ -39,8 +39,8 @@ namespace IdentityWebApp
 
             services.AddDbContext<AppIdentityDbContext>(options =>
             {
-                //options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultAzureConnectionString"));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnectionString"));
+                //options.UseSqlServer(Configuration.GetConnectionString("DefaultAzureConnectionString"));
             });
 
             services.AddAuthorization(options =>
