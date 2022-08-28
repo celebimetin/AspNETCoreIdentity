@@ -29,7 +29,11 @@ namespace IdentityWebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<TwoFactorOptions>(Configuration.GetSection("TwoFactorOptions"));
+
             services.AddScoped<TwoFactorService>();
+            services.AddScoped<EmailSender>();
+            services.AddScoped<SmsSender>();
 
             services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();
 
@@ -103,6 +107,13 @@ namespace IdentityWebApp
 
             services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
 
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.Name = "MainSession";
+
+            });
+
             services.AddMvc();
         }
 
@@ -120,6 +131,7 @@ namespace IdentityWebApp
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseSession();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapDefaultControllerRoute();

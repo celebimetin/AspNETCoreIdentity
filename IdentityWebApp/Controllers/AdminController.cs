@@ -11,7 +11,7 @@ namespace IdentityWebApp.Controllers
 {
     public class AdminController : BaseController
     {
-        public AdminController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager) : base(userManager, signInManager, roleManager, null) { }
+        public AdminController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager) : base(userManager, signInManager, roleManager) { }
 
         public IActionResult Index()
         {

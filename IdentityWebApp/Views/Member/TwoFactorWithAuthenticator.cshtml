@@ -5,8 +5,7 @@
     Layout = "~/Views/Member/_MemberLayout.cshtml";
 }
 
-@section Scripts
-{
+@section Scripts {
     <script type="text/javascript">
         var uri = "@Model.AuthenticatorUri";
         new QRCode(document.getElementById("qrcode"), {
@@ -16,8 +15,8 @@
             correctLevel: QRCode.CorrectLevel.H
         })
     </script>
-
 }
+
 <h4>İki Adımlı Kimlik Doğrulama</h4>
 
 <div class="row">

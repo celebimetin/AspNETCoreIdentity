@@ -19,7 +19,12 @@ namespace IdentityWebApp.Controllers
     [Authorize]
     public class MemberController : BaseController
     {
-        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TwoFactorService twoFactorService) : base(userManager, signInManager, null, twoFactorService) { }
+        private readonly TwoFactorService _twoFactorService;
+
+        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TwoFactorService twoFactorService) : base(userManager, signInManager, null) 
+        {
+            _twoFactorService = twoFactorService;
+        }
 
         public IActionResult Index()
         {
@@ -233,8 +238,18 @@ namespace IdentityWebApp.Controllers
                     TempData["message"] = "İki adımlı kimlik doğrulama tipiniz hiçbiri olarak belirlenmiştir.";
                     break;
                 case TwoFactor.Phone:
+                    if (string.IsNullOrEmpty(CurrentUser.PhoneNumber))
+                    {
+                        ViewBag.warning = "Telefon numaranız yanlış veya belirtilmemiştir.";
+                    }
+                    CurrentUser.TwoFactorEnabled = true;
+                    CurrentUser.TwoFactor = (sbyte)TwoFactor.Phone;
+                    TempData["message"] = "İki adımlı kimlik doğrulama tipiniz Telefon olarak belirlenmiştir.";
                     break;
                 case TwoFactor.Email:
+                    CurrentUser.TwoFactorEnabled = true;
+                    CurrentUser.TwoFactor = (sbyte)TwoFactor.Email;
+                    TempData["message"] = "İki adımlı kimlik doğrulama tipiniz Email olarak belirlenmiştir.";
                     break;
                 case TwoFactor.MicrosoftGoogle:
                     return RedirectToAction("TwoFactorWithAuthenticator");

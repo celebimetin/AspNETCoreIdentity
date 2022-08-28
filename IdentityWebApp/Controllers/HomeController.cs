@@ -1,6 +1,8 @@
 ﻿using IdentityWebApp.Enums;
 using IdentityWebApp.Models;
+using IdentityWebApp.Services;
 using IdentityWebApp.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,7 +14,16 @@ namespace IdentityWebApp.Controllers
 {
     public class HomeController : BaseController
     {
-        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager, null, null) { }
+        private readonly EmailSender _emailSender;
+        private readonly SmsSender _smsSender;
+        private readonly TwoFactorService _twoFactorService;
+
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, EmailSender emailSender, SmsSender smsSender, TwoFactorService twoFactorService) : base(userManager, signInManager, null)
+        {
+            _emailSender = emailSender;
+            _smsSender = smsSender;
+            _twoFactorService = twoFactorService;
+        }
 
         public IActionResult Index()
         {
@@ -101,7 +112,11 @@ namespace IdentityWebApp.Controllers
 
                         if (result.RequiresTwoFactor)
                         {
-                            return RedirectToAction("TwoFactorLogin");
+                            if (user.TwoFactor == (int)TwoFactor.Email || user.TwoFactor == (int)TwoFactor.Phone)
+                            {
+                                HttpContext.Session.Remove("currentTime");
+                            }
+                            return RedirectToAction("TwoFactorLogin", "Home", new { ReturnUrl = TempData["ReturnUrl"].ToString() });
                         }
                         else
                         {
@@ -142,7 +157,21 @@ namespace IdentityWebApp.Controllers
 
             switch ((TwoFactor)user.TwoFactor)
             {
-                case TwoFactor.MicrosoftGoogle:
+                case TwoFactor.Email:
+                    if (_twoFactorService.TimeLeft(HttpContext) == 0)
+                    {
+                        return RedirectToAction("Login");
+                    }
+                    ViewBag.timeLeft = _twoFactorService.TimeLeft(HttpContext);
+                    HttpContext.Session.SetString("codeVerification", _emailSender.Send(user.Email));
+                    break;
+                case TwoFactor.Phone:
+                    if (_twoFactorService.TimeLeft(HttpContext) == 0)
+                    {
+                        return RedirectToAction("Login");
+                    }
+                    ViewBag.timeLeft = _twoFactorService.TimeLeft(HttpContext);
+                    HttpContext.Session.SetString("codeVerification", _smsSender.Send(user.PhoneNumber));
                     break;
             }
             return View(new TwoFactorLoginViewModel() { TwoFactorType = (TwoFactor)user.TwoFactor, IsRecoverCode = false, IsRememberMe = false, VerificationCode = string.Empty });
@@ -175,6 +204,23 @@ namespace IdentityWebApp.Controllers
                 else
                 {
                     ModelState.AddModelError("", "Doğrulama kodu yanlış");
+                }
+            }
+            else if (user.TwoFactor == (sbyte)TwoFactor.Email || user.TwoFactor == (sbyte)TwoFactor.Phone)
+            {
+                ViewBag.timeLeft = _twoFactorService.TimeLeft(HttpContext);
+                if (twoFactorLoginViewModel.VerificationCode == HttpContext.Session.GetString("codeVerification"))
+                {
+                    await _signInManager.SignOutAsync();
+                    await _signInManager.SignInAsync(user, twoFactorLoginViewModel.IsRememberMe);
+                    HttpContext.Session.Remove("currentTime");
+                    HttpContext.Session.Remove("codeVerification");
+
+                    isSuccessAuth = true;
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Girmiş olduğunuz doğrulama kodu yanlıştır.");
                 }
             }
 
@@ -360,6 +406,21 @@ namespace IdentityWebApp.Controllers
         public IActionResult Policy()
         {
             return View();
+        }
+
+        [HttpGet]
+        public JsonResult AgainSendEmail()
+        {
+            try
+            {
+                var user = _signInManager.GetTwoFactorAuthenticationUserAsync().Result;
+                HttpContext.Session.SetString("codeVerification", _emailSender.Send(user.Email));
+                return Json(true);
+            }
+            catch (Exception)
+            {
+                return Json(false);
+            }
         }
     }
 }
