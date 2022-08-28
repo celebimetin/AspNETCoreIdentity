@@ -8,13 +8,13 @@ namespace IdentityWebApp.Helpers
         public static void EmailConfirmationSend(string link, string email)
         {
             MailMessage mail = new MailMessage();
-            SmtpClient smtpClient = new SmtpClient("smtp.mandrillapp.com");
+            SmtpClient smtpClient = new SmtpClient("smtp.sendgrid.com");
 
             mail.From = new MailAddress("metincelebi5534@hotmail.com");
             mail.To.Add(email);
 
-            mail.Subject = $"www.blabla.com::Email doğrulama";
-            mail.Body = "<h2>Email adresinizi doğrulamak için lütfen aşağıdaki linke tıklayınız.</h2><hr/>";
+            mail.Subject = $"www.identityuyeliksistemi.com::Email doğrulama";
+            mail.Body = "<h4>Email adresinizi doğrulamak için lütfen aşağıdaki linke tıklayınız.</h4><hr/>";
             mail.Body += $"<a href='{link}'>Email doğrulama linki</a>";
             mail.IsBodyHtml = true;
             smtpClient.Port = 587;
